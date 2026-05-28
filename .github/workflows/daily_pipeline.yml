@@ -1,0 +1,83 @@
+name: Daily Real-Time Pipeline
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  run_pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install google-cloud-pubsub
+          pip install google-cloud-bigquery
+          pip install python-dotenv
+          pip install faker
+          pip install requests
+          pip install db-dtypes
+          pip install pyarrow
+
+      - name: Set up GCP credentials
+        env:
+          GCP_KEY: ${{ secrets.GCP_KEY }}
+        run: |
+          echo '${{ secrets.GCP_KEY }}' > /tmp/gcp_key.json
+          echo "Credentials ready!"
+
+      - name: Run stream processor in background
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp_key.json
+          GCP_PROJECT_ID: ecommerce-dashboard-497321
+          PUBSUB_SUBSCRIPTION: ecommerce-orders-sub
+          BIGQUERY_DATASET: realtime_ecommerce
+        run: |
+          python pipeline/stream_processor.py &
+          echo "Processor started in background!"
+          sleep 5
+
+      - name: Run order simulator for 5 minutes
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp_key.json
+          GCP_PROJECT_ID: ecommerce-dashboard-497321
+          PUBSUB_TOPIC: ecommerce-orders
+        run: |
+          timeout 300 python simulator/order_simulator.py || true
+          echo "Simulator completed!"
+
+      - name: Wait for processor to finish
+        run: |
+          sleep 30
+          echo "Processing complete!"
+
+      - name: Run anomaly detector
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp_key.json
+          GCP_PROJECT_ID: ecommerce-dashboard-497321
+          BIGQUERY_DATASET: realtime_ecommerce
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          timeout 120 python detector/anomaly_detector.py || true
+          echo "Anomaly detection complete!"
+
+      - name: Generate daily summary
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp_key.json
+          GCP_PROJECT_ID: ecommerce-dashboard-497321
+        run: |
+          python infra/daily_summary.py
+
+      - name: Upload summary report
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-pipeline-report-${{ github.run_number }}
+          path: reports/
+          retention-days: 30
