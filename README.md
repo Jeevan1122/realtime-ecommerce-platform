@@ -4,12 +4,6 @@
 > BigQuery, and Gemini AI that processes live orders, detects fraud
 > patterns, and monitors anomalies — fully automated via GitHub Actions.
 
-[![GCP](https://img.shields.io/badge/Google_Cloud-4285F4?style=flat&logo=google-cloud&logoColor=white)](https://cloud.google.com)
-[![BigQuery](https://img.shields.io/badge/BigQuery-4285F4?style=flat&logo=google-cloud&logoColor=white)](https://cloud.google.com/bigquery)
-[![PubSub](https://img.shields.io/badge/Pub/Sub-4285F4?style=flat&logo=google-cloud&logoColor=white)](https://cloud.google.com/pubsub)
-[![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
-[![Gemini](https://img.shields.io/badge/Gemini_AI-8E75B2?style=flat&logo=google&logoColor=white)](https://ai.google.dev)
-[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat&logo=github-actions&logoColor=white)](https://github.com/features/actions)
 
 ---
 
